@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlyShip · Agente MercadoLibre con IA</title>
+  <style>
+    /* ── reset & base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1a1a1a;
+      background: #f8f8f8;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── hero ─────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #FFE600 0%, #FFC400 60%, #FFAA00 100%);
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero-logo {
+      font-size: 3.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: -0.5px;
+    }
+    .hero h1 span { color: #0066ff; }
+    .hero p {
+      font-size: 1.15rem;
+      color: #444;
+      max-width: 560px;
+      margin: 1rem auto 2rem;
+    }
+    .hero-badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      background: rgba(0,0,0,0.08);
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.85rem 2rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .btn-dark { background: #1a1a1a; color: #FFE600; }
+    .btn-light { background: #fff; color: #1a1a1a; margin-left: 0.8rem; }
+
+    /* ── section ──────────────────────────────────────────────────── */
+    section { padding: 5rem 2rem; }
+    .section-inner { max-width: 1080px; margin: 0 auto; }
+    .section-label {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #0066ff;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.3rem);
+      font-weight: 800;
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.3px;
+    }
+    .lead {
+      font-size: 1.05rem;
+      color: #555;
+      max-width: 600px;
+      margin-bottom: 3rem;
+    }
+
+    /* ── features grid ────────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.8rem;
+      border: 1px solid #e8e8e8;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .feature-icon { font-size: 2.2rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.9rem; color: #666; line-height: 1.5; }
+
+    /* ── two-column tab preview ───────────────────────────────────── */
+    .tabs-section { background: #1a1a1a; color: #fff; }
+    .tabs-section h2 { color: #FFE600; }
+    .tabs-section .lead { color: #aaa; }
+    .tabs-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 700px) { .tabs-wrapper { grid-template-columns: 1fr; } }
+    .tab-panel {
+      background: #2a2a2a;
+      border-radius: 16px;
+      padding: 1.8rem;
+      border: 1px solid #333;
+    }
+    .tab-panel h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; }
+    .tab-panel ul { list-style: none; padding: 0; }
+    .tab-panel ul li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+      font-size: 0.88rem;
+      color: #ccc;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+    .tab-panel ul li:last-child { border-bottom: none; }
+    .tab-panel ul li span.ic { flex-shrink: 0; }
+
+    /* ── rec-example ──────────────────────────────────────────────── */
+    .rec-example {
+      background: #fff;
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid #e8e8e8;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      margin-top: 2rem;
+    }
+    .rec-example h4 { font-size: 0.85rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; }
+    .rec-item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .rec-item:last-child { border-bottom: none; }
+    .priority-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .dot-alta  { background: #d93025; }
+    .dot-media { background: #f29900; }
+    .dot-baja  { background: #1e8449; }
+    .rec-item-content h5 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .rec-item-content p  { font-size: 0.82rem; color: #666; }
+
+    /* ── opp-example ──────────────────────────────────────────────── */
+    .opp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .opp-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.3rem;
+      border: 1px solid #e8e8e8;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    .opp-score {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #1e8449;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+    }
+    .opp-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .opp-card p { font-size: 0.8rem; color: #666; }
+    .pill-sm {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin: 0.15rem 0.1rem 0 0;
+    }
+    .pill-green { background: #d4edda; color: #155724; }
+    .pill-red   { background: #f8d7da; color: #721c24; }
+    .pill-blue  { background: #d1ecf1; color: #0c5460; }
+
+    /* ── setup ────────────────────────────────────────────────────── */
+    .setup-section { background: #fff; }
+    .steps { display: flex; flex-direction: column; gap: 1.2rem; max-width: 680px; }
+    .step {
+      display: flex;
+      gap: 1.2rem;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #FFE600;
+      color: #1a1a1a;
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body h4 { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+    .step-body p  { font-size: 0.88rem; color: #555; }
+    pre.code-block {
+      background: #1a1a1a;
+      color: #FFE600;
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: "Cascadia Code", "Fira Code", monospace;
+      margin-top: 0.5rem;
+      overflow-x: auto;
+    }
+
+    /* ── stack ────────────────────────────────────────────────────── */
+    .stack-section { background: #f8f8f8; }
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .stack-item {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+    }
+    .stack-item .si { font-size: 1.8rem; display: block; margin-bottom: 0.4rem; }
+    .stack-item h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .stack-item p  { font-size: 0.75rem; color: #888; }
+
+    /* ── footer ───────────────────────────────────────────────────── */
+    footer {
+      background: #1a1a1a;
+      color: #888;
+      text-align: center;
+      padding: 2.5rem 2rem;
+      font-size: 0.85rem;
+    }
+    footer strong { color: #FFE600; }
+
+    /* ── responsive ───────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .btn-light { margin-left: 0; margin-top: 0.6rem; }
+      .hero { padding: 3rem 1.5rem 2.5rem; }
+      section { padding: 3.5rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <div class="hero-logo">🚀</div>
+  <h1>Fly<span>Ship</span></h1>
+  <p>Tu agente de inteligencia artificial para optimizar publicaciones e identificar oportunidades de importación en MercadoLibre Argentina.</p>
+  <div class="hero-badges">
+    <span class="badge">🤖 IA con Claude Sonnet</span>
+    <span class="badge">📦 MercadoLibre AR</span>
+    <span class="badge">📊 BigQuery</span>
+    <span class="badge">🐍 Python + Streamlit</span>
+    <span class="badge">🇨🇳 Importación desde China</span>
+  </div>
+  <div>
+    <a href="#setup" class="btn btn-dark">Cómo instalarlo</a>
+    <a href="#features" class="btn btn-light">Ver funciones</a>
+  </div>
+</div>
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section id="features">
+  <div class="section-inner">
+    <p class="section-label">Funcionalidades</p>
+    <h2>Todo lo que necesitás para vender más</h2>
+    <p class="lead">FlyShip combina scraping inteligente de MercadoLibre con análisis de IA para darte ventaja competitiva real.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Análisis vs competencia</h3>
+        <p>Scrapea automáticamente los 25 productos más relevantes de tu categoría y los compara con tu publicación en tiempo real.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Recomendaciones accionables</h3>
+        <p>Claude IA analiza tu publicación y te devuelve mejoras concretas ordenadas por prioridad: título, precio, fotos, descripción, keywords, envío y más.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>Score de publicación</h3>
+        <p>Cada análisis genera un puntaje del 1 al 10 con justificación. Seguí la evolución de tus publicaciones a lo largo del tiempo.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Oportunidades de importación</h3>
+        <p>Seleccioná un vertical de MercadoLibre y el agente identifica nichos con alta demanda y baja competencia para importar desde China.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Datos de MercadoLibre</h3>
+        <p>Integrado con BigQuery sobre la tabla <code>METRICAS_VERTICALES_CX</code> para análisis de mercado basado en datos reales de MELI.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗂️</div>
+        <h3>Multi-producto</h3>
+        <p>Guardá todas tus publicaciones en un solo lugar. Agregá nuevos productos con un link y analizalos con un clic.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TAB PREVIEW ═══════════ -->
+<section class="tabs-section">
+  <div class="section-inner">
+    <p class="section-label" style="color:#aaa">Las dos solapas</p>
+    <h2>Dos herramientas en una app</h2>
+    <p class="lead">Navegá entre tus publicaciones actuales y el radar de oportunidades.</p>
+
+    <div class="tabs-wrapper">
+
+      <!-- TAB 1 -->
+      <div class="tab-panel">
+        <h3>📦 Mis Publicaciones</h3>
+        <ul>
+          <li><span class="ic">🔊</span> <div>Tus productos pre-cargados: <strong>Parlantito Bluetooth</strong> y <strong>Lámpara LED Origami</strong></div></li>
+          <li><span class="ic">🔍</span> <div>Botón <strong>Analizar</strong>: scrapea tu listing + top 25 competidores</div></li>
+          <li><span class="ic">🤖</span> <div>Claude Sonnet analiza y genera recomendaciones priorizadas (Alta / Media / Baja)</div></li>
+          <li><span class="ic">💰</span> <div>Posicionamiento de precio vs el mercado</div></li>
+          <li><span class="ic">📜</span> <div>Historial completo de todos los análisis anteriores</div></li>
+          <li><span class="ic">➕</span> <div>Agregá nuevos productos con solo pegar el link de ML</div></li>
+          <li><span class="ic">💾</span> <div>Todo guardado localmente en <code>data/publications.json</code></div></li>
+        </ul>
+      </div>
+
+      <!-- TAB 2 -->
+      <div class="tab-panel">
+        <h3>🔍 Oportunidades</h3>
+        <ul>
+          <li><span class="ic">📊</span> <div>Carga verticales directamente desde BigQuery (<code>METRICAS_VERTICALES_CX</code>)</div></li>
+          <li><span class="ic">🎯</span> <div>Seleccionás un vertical (Electrónica, Hogar, Deportes, etc.)</div></li>
+          <li><span class="ic">🧠</span> <div>Claude identifica nichos con alta demanda y baja competencia</div></li>
+          <li><span class="ic">💵</span> <div>Estimación de costo de importación y precio de venta para cada nicho</div></li>
+          <li><span class="ic">🔑</span> <div>Keywords de búsqueda y diferenciadores clave por nicho</div></li>
+          <li><span class="ic">⭐</span> <div>Recomendación top: el mejor producto para importar ahora</div></li>
+          <li><span class="ic">🔄</span> <div>Refresh de verticales sin reiniciar la app</div></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ EJEMPLO RECOMENDACIONES ═══════════ -->
+<section style="background:#fff">
+  <div class="section-inner">
+    <p class="section-label">Ejemplo real</p>
+    <h2>Qué tipo de recomendaciones genera</h2>
+    <p class="lead">Esto es lo que Claude devuelve al analizar una publicación de parlante Bluetooth vs los competidores del mercado.</p>
+
+    <div class="rec-example">
+      <h4>📋 Recomendaciones — Parlantito Bluetooth · Puntaje: 5/10</h4>
+
+      <div class="rec-item">
+        <div class="priority-dot dot-alta"></div>
+        <div class="rec-item-content">
+          <h5>🏷️ TÍTULO · Prioridad alta</h5>
+          <p><strong>Problema:</strong> El título no incluye términos de búsqueda de alto volumen como "5W", "TWS" o el rango de batería.<br>
+          <strong>Acción:</strong> Cambiarlo a "Parlante Bluetooth Mini 5W Portátil Recargable USB TWS Estéreo" para capturar más búsquedas long-tail.<br>
+          <em>Impacto: +30-40% en visibilidad en búsquedas orgánicas.</em></p>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <div class="priority-dot dot-alta"></div>
+        <div class="rec-item-content">
+          <h5>📸 FOTOS · Prioridad alta</h5>
+          <p><strong>Problema:</strong> Solo 1 foto. Los competidores con más de 6 reseñas tienen entre 6 y 9 imágenes.<br>
+          <strong>Acción:</strong> Agregar fotos mostrando: tamaño en mano, puertos USB-C, conexión al celular, uso en exterior, especificaciones técnicas sobre imagen.<br>
+          <em>Impacto: Las publicaciones con 7+ fotos convierten 2x más.</em></p>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <div class="priority-dot dot-media"></div>
+        <div class="rec-item-content">
+          <h5>🚚 ENVÍO · Prioridad media</h5>
+          <p><strong>Problema:</strong> Sin envío gratis. El 68% de los competidores top ofrecen envío gratis o Mercado Envíos full.<br>
+          <strong>Acción:</strong> Activar Mercado Envíos full o incorporar el costo de envío al precio y ofrecer "envío gratis".<br>
+          <em>Impacto: El filtro "envío gratis" excluye tu publicación de un segmento grande.</em></p>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <div class="priority-dot dot-baja"></div>
+        <div class="rec-item-content">
+          <h5>🎬 VIDEO · Prioridad baja</h5>
+          <p><strong>Problema:</strong> Sin video. Los listings con video tienen mejor CTR en móvil.<br>
+          <strong>Acción:</strong> Subir un video corto (30-60s) mostrando el sonido, conectividad y portabilidad.<br>
+          <em>Impacto: Diferenciador visual frente a competidores sin video.</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ EJEMPLO OPORTUNIDADES ═══════════ -->
+<section style="background:#f8f8f8">
+  <div class="section-inner">
+    <p class="section-label">Ejemplo de oportunidades</p>
+    <h2>Nichos identificados por el agente</h2>
+    <p class="lead">Ejemplo de lo que el agente devuelve para el vertical "Electrónica".</p>
+
+    <div class="opp-grid">
+
+      <div class="opp-card">
+        <div class="opp-score">9/10</div>
+        <h4>💡 Lámparas LED inteligentes RGB</h4>
+        <div>
+          <span class="pill-sm pill-green">Demanda: Alta</span>
+          <span class="pill-sm pill-green">Comp: Baja</span>
+        </div>
+        <p style="margin-top:0.5rem">Importación: $3–8 USD · Venta: $15.000–35.000 ARS</p>
+        <p>Nicho en crecimiento con pocos sellers establecidos. Alta diferenciación posible por colores y control app.</p>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-score">8/10</div>
+        <h4>🎮 Soportes ergonómicos de escritorio</h4>
+        <div>
+          <span class="pill-sm pill-green">Demanda: Alta</span>
+          <span class="pill-sm pill-green" style="background:#d4edda">Comp: Media</span>
+        </div>
+        <p style="margin-top:0.5rem">Importación: $4–10 USD · Venta: $18.000–45.000 ARS</p>
+        <p>Boom del home office post-pandemia. Soporte para monitor + laptop en un solo accesorio.</p>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-score">7/10</div>
+        <h4>🔋 Cables USB-C con carga rápida 65W</h4>
+        <div>
+          <span class="pill-sm pill-green">Demanda: Alta</span>
+          <span class="pill-sm" style="background:#fff3cd;color:#856404">Comp: Media</span>
+        </div>
+        <p style="margin-top:0.5rem">Importación: $1–3 USD · Venta: $5.000–12.000 ARS</p>
+        <p>Producto de rotación rápida. Diferenciarse con "certificado" y packaging premium.</p>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-score">7/10</div>
+        <h4>🌙 Humidificadores mini USB</h4>
+        <div>
+          <span class="pill-sm pill-green">Demanda: Alta</span>
+          <span class="pill-sm pill-green">Comp: Baja</span>
+        </div>
+        <p style="margin-top:0.5rem">Importación: $4–9 USD · Venta: $14.000–28.000 ARS</p>
+        <p>Alta demanda en invierno. Pocos sellers con buena presentación y descripción completa.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SETUP ═══════════ -->
+<section class="setup-section" id="setup">
+  <div class="section-inner">
+    <p class="section-label">Instalación</p>
+    <h2>Cómo ponerlo a correr</h2>
+    <p class="lead">Requisitos: Python 3.11+ y una API key de Anthropic. En 5 minutos estás andando.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Cloná el repositorio</h4>
+          <pre class="code-block">git clone https://github.com/tu-usuario/flyship.git
+cd flyship</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Instalá las dependencias</h4>
+          <pre class="code-block">pip install -r requirements.txt</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Configurá tu API key de Anthropic</h4>
+          <p>Obtenela en <strong>console.anthropic.com</strong>.</p>
+          <pre class="code-block"># Windows (Git Bash)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# O la podés pegar directamente en el panel lateral de la app</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Iniciá la app</h4>
+          <pre class="code-block">python -m streamlit run app.py</pre>
+          <p style="margin-top:0.5rem">La app se abre en <code>http://localhost:8501</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>(Opcional) BigQuery para la sección Oportunidades</h4>
+          <p>Autenticá con tu cuenta de Google Cloud:</p>
+          <pre class="code-block">gcloud auth application-default login</pre>
+          <p style="margin-top:0.3rem">Necesitás acceso al proyecto <code>meli-bi-data</code>.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STACK ═══════════ -->
+<section class="stack-section">
+  <div class="section-inner">
+    <p class="section-label">Stack tecnológico</p>
+    <h2>Construido sobre las mejores herramientas</h2>
+    <p class="lead" style="margin-bottom:2rem">Todo open source y fácil de extender.</p>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <span class="si">🤖</span>
+        <h4>Claude Sonnet</h4>
+        <p>Motor de análisis e IA. Anthropic API.</p>
+      </div>
+      <div class="stack-item">
+        <span class="si">🎈</span>
+        <h4>Streamlit</h4>
+        <p>Interfaz web en Python puro.</p>
+      </div>
+      <div class="stack-item">
+        <span class="si">🕷️</span>
+        <h4>BeautifulSoup 4</h4>
+        <p>Scraping de publicaciones y búsquedas ML.</p>
+      </div>
+      <div class="stack-item">
+        <span class="si">📊</span>
+        <h4>BigQuery</h4>
+        <p>Datos de verticales y métricas de MELI.</p>
+      </div>
+      <div class="stack-item">
+        <span class="si">🐍</span>
+        <h4>Python 3.11+</h4>
+        <p>Lenguaje base. Sin dependencias complejas.</p>
+      </div>
+      <div class="stack-item">
+        <span class="si">💾</span>
+        <h4>JSON local</h4>
+        <p>Persistencia liviana. Sin base de datos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div style="font-size:2rem;margin-bottom:0.5rem">🚀</div>
+  <p><strong>FlyShip</strong> · Agente MercadoLibre con IA</p>
+  <p style="margin-top:0.5rem">Construido con ❤️ para vendedores que importan desde China · MercadoLibre Argentina</p>
+</footer>
+
+</body>
+</html>
