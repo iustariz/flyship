@@ -177,13 +177,13 @@ st.markdown(
 )
 
 # ── API key check ─────────────────────────────────────────────────────────────
-api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+api_key = os.environ.get("GEMINI_API_KEY", "")
 if not api_key:
     with st.sidebar:
         st.subheader("⚙️ Configuración")
-        key_input = st.text_input("ANTHROPIC_API_KEY", type="password", placeholder="sk-ant-...")
+        key_input = st.text_input("GEMINI_API_KEY", type="password", placeholder="AIza...")
         if key_input:
-            os.environ["ANTHROPIC_API_KEY"] = key_input
+            os.environ["GEMINI_API_KEY"] = key_input
             st.success("Clave guardada en sesión")
 
 # ── TABS ──────────────────────────────────────────────────────────────────────
@@ -284,7 +284,7 @@ with tab_pubs:
             with col_action:
                 analyze_key = f"analyze_{pub['id']}"
                 if st.button("🔍 Analizar", key=analyze_key, use_container_width=True):
-                    if not os.environ.get("ANTHROPIC_API_KEY"):
+                    if not os.environ.get("GEMINI_API_KEY"):
                         st.error("Configurá tu ANTHROPIC_API_KEY en el panel lateral.")
                     else:
                         with st.spinner(f"Analizando **{pub['name']}**… esto puede tardar 30-60 seg."):
@@ -433,7 +433,7 @@ with tab_opps:
     if analyze_opp:
         if not selected_vertical:
             st.error("Seleccioná o ingresá un vertical.")
-        elif not os.environ.get("ANTHROPIC_API_KEY"):
+        elif not os.environ.get("GEMINI_API_KEY"):
             st.error("Configurá tu ANTHROPIC_API_KEY en el panel lateral.")
         else:
             with st.spinner(f"Analizando oportunidades en **{selected_vertical}**…"):

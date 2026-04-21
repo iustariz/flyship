@@ -1,25 +1,40 @@
 import os
+import re
 import json
-import anthropic
+from google import genai
+from google.genai import types
 
 _client = None
 
 
-def get_client() -> anthropic.Anthropic:
+def _get_client():
     global _client
     if _client is None:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY no configurada")
-        _client = anthropic.Anthropic(api_key=api_key)
+            raise ValueError("GEMINI_API_KEY no configurada")
+        _client = genai.Client(api_key=api_key)
     return _client
 
 
+def _call(prompt: str, max_tokens: int = 2000) -> str:
+    client = _get_client()
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            max_output_tokens=max_tokens,
+            temperature=0.3,
+        ),
+    )
+    text = response.text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\n?", "", text)
+        text = re.sub(r"\n?```$", "", text)
+    return text
+
+
 def analyze_publication(my_listing: dict, competitors: list) -> dict:
-    """
-    Analyze a MercadoLibre listing vs competitors and return structured recommendations.
-    Returns a dict with keys: score, summary, recommendations (list of dicts).
-    """
     competitors_text = ""
     for i, c in enumerate(competitors[:15], 1):
         price = f"${c.get('price'):,}" if c.get("price") else "N/D"
@@ -71,28 +86,10 @@ Analizá en profundidad y devolvé un JSON con esta estructura exacta (sin texto
 
 Ordená las recomendaciones de mayor a menor prioridad. Sé muy específico y usa ejemplos reales del mercado."""
 
-    client = get_client()
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    text = response.content[0].text.strip()
-    # Strip markdown code block if present
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\n?", "", text)
-        text = re.sub(r"\n?```$", "", text)
-
-    import re
-    return json.loads(text)
+    return json.loads(_call(prompt, max_tokens=2000))
 
 
 def analyze_opportunities(vertical_data: list, selected_vertical: str) -> dict:
-    """
-    Analyze BigQuery vertical data to find niche import opportunities.
-    Returns dict with opportunities list and analysis.
-    """
     data_text = json.dumps(vertical_data[:50], ensure_ascii=False, indent=2)
 
     prompt = f"""Sos un experto en importación y comercio electrónico, especializado en MercadoLibre Argentina.
@@ -131,42 +128,4 @@ Devolvé un JSON con esta estructura exacta (sin texto extra):
 
 Ordená las oportunidades de mayor a menor score."""
 
-    client = get_client()
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2500,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    text = response.content[0].text.strip()
-    import re
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\n?", "", text)
-        text = re.sub(r"\n?```$", "", text)
-
-    return json.loads(text)
-
-
-def quick_listing_preview(url: str) -> dict:
-    """Ask Claude to describe what it knows about this type of product for a quick preview."""
-    prompt = f"""Para la URL de MercadoLibre: {url}
-
-Extraé el ID del item (formato MLA-XXXXXXXXX) y el tipo de producto del título en la URL.
-Devolvé JSON:
-{{"item_id": "<MLA-XXX>", "product_type": "<tipo de producto inferido del título URL>"}}"""
-
-    client = get_client()
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=200,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = response.content[0].text.strip()
-    import re, json
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\n?", "", text)
-        text = re.sub(r"\n?```$", "", text)
-    try:
-        return json.loads(text)
-    except Exception:
-        return {}
+    return json.loads(_call(prompt, max_tokens=2500))
